@@ -522,7 +522,7 @@ function login(profile) {
       saveSession({ id: me.id });
       saveProfile(profile);
       rooms = res.rooms;
-      setMeAvatar();
+      renderMe();
       renderRooms();
       renderPresence();
       $('#login').style.display = 'none';
