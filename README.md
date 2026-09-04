@@ -29,14 +29,18 @@ npm start
 
 ## Deploy to Render (free, permanent URL)
 
-1. Push the `chatter/` folder to a new GitHub repo
-2. Sign up at https://render.com and click **New + Web Service**
-3. Connect your repo — Render auto-detects `render.yaml`
-4. Click **Deploy** — your app gets a URL like `https://chatter.onrender.com`
+Click this button — it will create a Render account if you don't have one, then deploy this repo:
 
-Or click the button below after connecting the repo to Render:
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/parrotos2009-dotcom/chatter)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+After clicking:
+1. Sign in with GitHub (one click — Render needs access to your repos to deploy)
+2. Give the service a name (e.g. `chatter`) — this becomes your subdomain
+3. Click **Apply** / **Deploy**
+4. Wait ~2 minutes for the first build
+5. Your live URL will be `https://chatter.onrender.com` (or whatever name you chose)
+
+The `render.yaml` file in this repo is auto-detected and configures everything (Node 20, free plan, build & start commands).
 
 ## Deploy to Railway
 
