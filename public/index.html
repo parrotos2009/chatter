@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b141a" />
+    <title>Chatter</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2300a884'/%3E%3Cpath d='M28 32h44a8 8 0 0 1 8 8v22a8 8 0 0 1-8 8H42l-12 10v-10h-2a8 8 0 0 1-8-8V40a8 8 0 0 1 8-8z' fill='white'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app">
+      <!-- Login overlay -->
+      <div id="login" class="login">
+        <div class="login-card">
+          <div class="brand">
+            <div class="brand-mark">
+              <svg viewBox="0 0 100 100" width="56" height="56"><rect width="100" height="100" rx="22" fill="#00a884"/><path d="M28 32h44a8 8 0 0 1 8 8v22a8 8 0 0 1-8 8H42l-12 10v-10h-2a8 8 0 0 1-8-8V40a8 8 0 0 1 8-8z" fill="white"/></svg>
+            </div>
+            <h1>Chatter</h1>
+            <p>Real-time chat with calls, DMs, and groups.</p>
+          </div>
+          <form id="login-form" class="login-form">
+            <div class="avatar-picker">
+              <label class="avatar-drop" id="avatar-drop">
+                <img id="avatar-preview" alt="" />
+                <span class="avatar-drop-text">📷 Upload<br/><small>or pick below</small></span>
+              </label>
+              <input type="file" id="avatar-file" accept="image/*" hidden />
+            </div>
+            <label>Your name</label>
+            <input id="login-name" type="text" maxlength="32" placeholder="e.g. Alex" required />
+            <label>Pick a color</label>
+            <div class="color-row" id="color-row"></div>
+            <label>Short bio <small>(optional)</small></label>
+            <input id="login-bio" type="text" maxlength="140" placeholder="Hey there! I'm using Chatter." />
+            <button type="submit">Start chatting</button>
+          </form>
+          <div class="login-foot">Your profile is stored locally. Be kind.</div>
+        </div>
+      </div>
+
+      <!-- Main app -->
+      <aside class="sidebar">
+        <header class="sidebar-head">
+          <button class="me-chip" id="me-chip" title="Edit profile">
+            <div class="avatar" id="me-avatar">A</div>
+            <div class="me-meta">
+              <div class="me-name" id="me-name">…</div>
+              <div class="me-sub">tap to edit profile</div>
+            </div>
+          </button>
+          <div class="head-actions">
+            <button class="icon-btn" id="new-dm-btn" title="New chat">💬</button>
+            <button class="icon-btn" id="new-group-btn" title="New group">👥</button>
+            <button class="icon-btn" id="logout-btn" title="Sign out">⎋</button>
+          </div>
+        </header>
+        <div class="search">
+          <input id="search-input" type="text" placeholder="🔍  Search chats" />
+        </div>
+        <div class="room-list" id="room-list"></div>
+        <footer class="sidebar-foot">
+          <span class="dot"></span>
+          <span id="presence-count">0 online</span>
+        </footer>
+      </aside>
+
+      <main class="chat">
+        <header class="chat-head">
+          <button class="chat-head-left" id="chat-head-left">
+            <div class="avatar lg" id="chat-avatar">#</div>
+            <div class="chat-titles">
+              <div class="chat-title" id="chat-title">Select a chat</div>
+              <div class="chat-sub" id="chat-sub">—</div>
+            </div>
+          </button>
+          <div class="chat-head-right">
+            <button class="icon-btn lg" id="call-voice-btn" title="Voice call" disabled>📞</button>
+            <button class="icon-btn lg" id="call-video-btn" title="Video call" disabled>📹</button>
+            <button class="icon-btn lg" id="chat-info-btn" title="Chat info">ℹ️</button>
+            <span class="status-pill" id="conn-status">connecting…</span>
+          </div>
+        </header>
+
+        <section class="messages" id="messages">
+          <div class="empty" id="empty-state">
+            <div class="empty-illu">
+              <svg viewBox="0 0 100 100" width="140" height="140"><rect width="100" height="100" rx="22" fill="#00a884" opacity="0.12"/><path d="M28 32h44a8 8 0 0 1 8 8v22a8 8 0 0 1-8 8H42l-12 10v-10h-2a8 8 0 0 1-8-8V40a8 8 0 0 1 8-8z" fill="#00a884"/></svg>
+            </div>
+            <h2>Welcome to Chatter</h2>
+            <p>Pick a chat on the left, or start a new conversation.</p>
+          </div>
+        </section>
+
+        <div class="typing" id="typing"></div>
+
+        <form class="composer" id="composer">
+          <button type="button" class="icon-btn" id="emoji-btn" title="Emoji">😊</button>
+          <input id="msg-input" type="text" placeholder="Type a message" maxlength="4000" autocomplete="off" disabled />
+          <button type="submit" id="send-btn" disabled>
+            <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+          </button>
+        </form>
+      </main>
+
+      <!-- Right panel: chat info / members -->
+      <aside class="rightpanel" id="rightpanel">
+        <header class="rp-head">
+          <button class="icon-btn" id="rp-close">✕</button>
+          <div class="rp-title" id="rp-title">Chat info</div>
+        </header>
+        <div class="rp-body" id="rp-body"></div>
+      </aside>
+    </div>
+
+    <!-- Profile editor -->
+    <dialog id="profile-dialog" class="dialog">
+      <form method="dialog" id="profile-form">
+        <h3>Edit profile</h3>
+        <div class="profile-pic-row">
+          <label class="avatar-drop sm" id="profile-avatar-drop">
+            <img id="profile-avatar-preview" alt="" />
+            <span class="avatar-drop-text">📷</span>
+          </label>
+          <input type="file" id="profile-avatar-file" accept="image/*" hidden />
+        </div>
+        <label>Name</label>
+        <input id="profile-name" type="text" maxlength="32" />
+        <label>Color</label>
+        <div class="color-row" id="profile-color-row"></div>
+        <label>Bio</label>
+        <input id="profile-bio" type="text" maxlength="140" />
+        <menu>
+          <button value="cancel" class="btn-ghost">Cancel</button>
+          <button value="confirm" class="btn-primary">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- New DM dialog -->
+    <dialog id="dm-dialog" class="dialog">
+      <form method="dialog">
+        <h3>New chat</h3>
+        <input id="dm-search" type="text" placeholder="Search people…" />
+        <div class="user-list" id="dm-list"></div>
+        <menu><button value="cancel" class="btn-ghost">Close</button></menu>
+      </form>
+    </dialog>
+
+    <!-- New group dialog -->
+    <dialog id="group-dialog" class="dialog">
+      <form method="dialog" id="group-form">
+        <h3>New group</h3>
+        <label>Group name</label>
+        <input id="group-name" type="text" maxlength="50" required />
+        <label>Add members</label>
+        <input id="group-search" type="text" placeholder="Search people…" />
+        <div class="user-list" id="group-list"></div>
+        <menu>
+          <button value="cancel" class="btn-ghost">Cancel</button>
+          <button value="confirm" class="btn-primary" id="group-confirm">Create</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Add member dialog -->
+    <dialog id="addmember-dialog" class="dialog">
+      <form method="dialog">
+        <h3>Add member</h3>
+        <input id="addmember-search" type="text" placeholder="Search people…" />
+        <div class="user-list" id="addmember-list"></div>
+        <menu><button value="cancel" class="btn-ghost">Close</button></menu>
+      </form>
+    </dialog>
+
+    <!-- Incoming call -->
+    <div id="incoming-call" class="incoming hidden">
+      <div class="ic-card">
+        <img class="avatar lg" id="ic-avatar" alt="" />
+        <div class="ic-name" id="ic-name">Someone</div>
+        <div class="ic-sub" id="ic-sub">incoming call…</div>
+        <div class="ic-actions">
+          <button class="ic-btn accept" id="ic-accept">📞</button>
+          <button class="ic-btn reject" id="ic-reject">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active call overlay -->
+    <div id="call-overlay" class="call-overlay hidden">
+      <div class="call-stage" id="call-stage">
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" autoplay playsinline muted></video>
+        <audio id="remote-audio" autoplay></audio>
+      </div>
+      <div class="call-info" id="call-info">
+        <div class="call-name" id="call-name">Calling…</div>
+        <div class="call-status" id="call-status">ringing</div>
+      </div>
+      <div class="call-controls">
+        <button class="ic-btn mute" id="cc-mute" title="Mute">🎙</button>
+        <button class="ic-btn cam" id="cc-cam" title="Camera">📷</button>
+        <button class="ic-btn end" id="cc-end" title="End">✕</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

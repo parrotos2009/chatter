@@ -1,0 +1,19 @@
+{
+  "name": "chatter",
+  "version": "2.0.0",
+  "description": "Chatter - real-time chat with DMs, groups, profile pictures, voice and video calls",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
