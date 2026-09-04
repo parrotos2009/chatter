@@ -40,6 +40,8 @@ After clicking:
 4. Wait ~2 minutes for the first build
 5. Your live URL will be `https://chatter.onrender.com` (or whatever name you chose)
 
+Once the service is created, **every push to `main` auto-deploys** — so future fixes go live automatically.
+
 The `render.yaml` file in this repo is auto-detected and configures everything (Node 20, free plan, build & start commands).
 
 ## Deploy to Railway
