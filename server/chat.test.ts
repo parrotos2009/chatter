@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { TrpcContext } from "./_core/context";
 
 vi.mock("./db", () => ({
+  clearRoomMessages: vi.fn(async () => undefined),
   getActivePresence: vi.fn(async () => []),
   getCallSignals: vi.fn(async () => []),
   getRecentChatMessages: vi.fn(async () => []),
@@ -40,5 +41,17 @@ describe("chat room", () => {
     const caller = appRouter.createCaller(createContext());
     const result = await caller.rtc.signals({ roomId: "lobby", toClientId: "guest-2", after: new Date(0) });
     expect(result).toEqual([]);
+  });
+
+  it("creates a shareable room identifier", async () => {
+    const caller = appRouter.createCaller(createContext());
+    const result = await caller.rooms.create({ name: "Weekend plans" });
+    expect(result.name).toBe("Weekend plans");
+    expect(result.roomId).toMatch(/^weekend-plans-/);
+  });
+
+  it("requires the explicit CLEAR confirmation", async () => {
+    const caller = appRouter.createCaller(createContext());
+    await expect(caller.rooms.clear({ roomId: "lobby", confirmation: "NO" as "CLEAR" })).rejects.toThrow();
   });
 });

@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { getActivePresence, getCallSignals, getRecentChatMessages, insertCallSignal, insertChatMessage, upsertPresence } from "./db";
+import { clearRoomMessages, getActivePresence, getCallSignals, getRecentChatMessages, insertCallSignal, insertChatMessage, upsertPresence } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 
@@ -49,6 +49,10 @@ export const appRouter = router({
       const { url } = await storagePut(`${input.clientId}-shared/${nanoid(10)}-${safeName}`, buffer, input.mimeType || "application/octet-stream");
       return { url, fileName: input.fileName, mimeType: input.mimeType };
     }),
+  }),
+  rooms: router({
+    create: publicProcedure.input(z.object({ name: z.string().trim().min(1).max(80) })).mutation(({ input }) => ({ roomId: `${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "room"}-${nanoid(6).toLowerCase()}`, name: input.name.trim() })),
+    clear: publicProcedure.input(z.object({ roomId: z.string().min(1).max(64), confirmation: z.literal("CLEAR") })).mutation(async ({ input }) => { await clearRoomMessages(input.roomId); return { ok: true } as const; }),
   }),
   rtc: router({
     sendSignal: publicProcedure.input(z.object({ roomId: z.string().min(1).max(64).default("lobby"), fromClientId: z.string().min(1).max(64), toClientId: z.string().min(1).max(64), kind: z.enum(["offer", "answer", "candidate", "hangup"]), payload: z.string().max(20_000) })).mutation(async ({ input }) => {

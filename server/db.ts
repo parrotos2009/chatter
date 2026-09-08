@@ -130,3 +130,10 @@ export async function getCallSignals(roomId: string, toClientId: string, after: 
   if (!db) return [];
   return db.select().from(callSignals).where(and(eq(callSignals.roomId, roomId), eq(callSignals.toClientId, toClientId), gt(callSignals.createdAt, after))).orderBy(callSignals.createdAt).limit(40);
 }
+
+export async function clearRoomMessages(roomId: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(chatMessages).where(eq(chatMessages.roomId, roomId));
+  await db.delete(callSignals).where(eq(callSignals.roomId, roomId));
+}
