@@ -1,4 +1,4 @@
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { callSignals, chatMessages, chatPresence, chatRooms, InsertCallSignal, InsertChatMessage, InsertChatRoom, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -128,7 +128,7 @@ export async function insertCallSignal(signal: InsertCallSignal) {
 export async function getCallSignals(roomId: string, toClientId: string, after: Date) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(callSignals).where(and(eq(callSignals.roomId, roomId), eq(callSignals.toClientId, toClientId), gt(callSignals.createdAt, after))).orderBy(callSignals.createdAt).limit(40);
+  return db.select().from(callSignals).where(and(eq(callSignals.roomId, roomId), eq(callSignals.toClientId, toClientId), gte(callSignals.createdAt, after))).orderBy(callSignals.createdAt).limit(40);
 }
 
 export async function clearRoomMessages(roomId: string) {
