@@ -27,5 +27,5 @@ pnpm build
 
 CHATTER was created by **Emmanuel Kingsley**.
 
-- Email: emmanuelkingsley255@gmail.com
-- Contact: 0627120273
+- Email: none of your business
+- Contact: no of your business
