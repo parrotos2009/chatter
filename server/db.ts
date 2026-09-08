@@ -1,6 +1,6 @@
 import { and, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { callSignals, chatMessages, chatPresence, InsertCallSignal, InsertChatMessage, InsertUser, users } from "../drizzle/schema";
+import { callSignals, chatMessages, chatPresence, chatRooms, InsertCallSignal, InsertChatMessage, InsertChatRoom, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -136,4 +136,17 @@ export async function clearRoomMessages(roomId: string) {
   if (!db) return;
   await db.delete(chatMessages).where(eq(chatMessages.roomId, roomId));
   await db.delete(callSignals).where(eq(callSignals.roomId, roomId));
+}
+
+export async function listChatRooms(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(chatRooms).orderBy(desc(chatRooms.createdAt)).limit(limit);
+}
+
+export async function insertChatRoom(room: InsertChatRoom) {
+  const db = await getDb();
+  if (!db) return room;
+  await db.insert(chatRooms).values(room);
+  return room;
 }

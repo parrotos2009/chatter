@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { clearRoomMessages, getActivePresence, getCallSignals, getRecentChatMessages, insertCallSignal, insertChatMessage, upsertPresence } from "./db";
+import { clearRoomMessages, getActivePresence, getCallSignals, getRecentChatMessages, insertCallSignal, insertChatMessage, insertChatRoom, listChatRooms, upsertPresence } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 
@@ -51,7 +51,8 @@ export const appRouter = router({
     }),
   }),
   rooms: router({
-    create: publicProcedure.input(z.object({ name: z.string().trim().min(1).max(80) })).mutation(({ input }) => ({ roomId: `${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "room"}-${nanoid(6).toLowerCase()}`, name: input.name.trim() })),
+    list: publicProcedure.query(async () => listChatRooms()),
+    create: publicProcedure.input(z.object({ name: z.string().trim().min(1).max(80), createdBy: z.string().min(1).max(64) })).mutation(async ({ input }) => { const room = { id: `${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "room"}-${nanoid(6).toLowerCase()}`, name: input.name.trim(), createdBy: input.createdBy }; return insertChatRoom(room); }),
     clear: publicProcedure.input(z.object({ roomId: z.string().min(1).max(64), confirmation: z.literal("CLEAR") })).mutation(async ({ input }) => { await clearRoomMessages(input.roomId); return { ok: true } as const; }),
   }),
   rtc: router({

@@ -8,6 +8,8 @@ vi.mock("./db", () => ({
   getRecentChatMessages: vi.fn(async () => []),
   insertCallSignal: vi.fn(async () => undefined),
   insertChatMessage: vi.fn(),
+  insertChatRoom: vi.fn(async (room) => room),
+  listChatRooms: vi.fn(async () => []),
   upsertPresence: vi.fn(async () => undefined),
 }));
 
@@ -45,9 +47,14 @@ describe("chat room", () => {
 
   it("creates a shareable room identifier", async () => {
     const caller = appRouter.createCaller(createContext());
-    const result = await caller.rooms.create({ name: "Weekend plans" });
+    const result = await caller.rooms.create({ name: "Weekend plans", createdBy: "guest-1" });
     expect(result.name).toBe("Weekend plans");
-    expect(result.roomId).toMatch(/^weekend-plans-/);
+    expect(result.id).toMatch(/^weekend-plans-/);
+  });
+
+  it("lists public rooms without authentication", async () => {
+    const caller = appRouter.createCaller(createContext());
+    await expect(caller.rooms.list()).resolves.toEqual([]);
   });
 
   it("requires the explicit CLEAR confirmation", async () => {

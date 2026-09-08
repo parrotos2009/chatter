@@ -63,3 +63,13 @@ export const callSignals = mysqlTable("callSignals", {
 
 export type CallSignal = typeof callSignals.$inferSelect;
 export type InsertCallSignal = typeof callSignals.$inferInsert;
+
+export const chatRooms = mysqlTable("chatRooms", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 80 }).notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ChatRoom = typeof chatRooms.$inferSelect;
+export type InsertChatRoom = typeof chatRooms.$inferInsert;
