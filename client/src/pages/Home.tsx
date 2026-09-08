@@ -87,6 +87,8 @@ export default function Home() {
   const [profileName, setProfileName] = useState(() => localStorage.getItem("chatter-profile-name") || "Alex Morgan");
   const [profileHandle, setProfileHandle] = useState(() => localStorage.getItem("chatter-profile-handle") || "@alexmorgan");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [presenceTick, setPresenceTick] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
   const endRef = useRef<HTMLDivElement>(null);
   const askAI = trpc.ai.ask.useMutation();
 
@@ -96,6 +98,20 @@ export default function Home() {
     [contacts, query],
   );
   const selectedMessages = messages[selected.id] ?? [];
+
+  useEffect(() => {
+    const presenceTimer = window.setInterval(() => setPresenceTick((value) => value + 1), 6500);
+    return () => window.clearInterval(presenceTimer);
+  }, []);
+
+  useEffect(() => {
+    setIsTyping(true);
+    const typingTimer = window.setTimeout(() => setIsTyping(false), 4200);
+    return () => window.clearTimeout(typingTimer);
+  }, [selectedId, presenceTick]);
+
+  const selectedIsOnline = selected.online && (selected.id !== "maya" || presenceTick % 3 !== 2);
+  const selectedStatus = isTyping ? "typing…" : selectedIsOnline ? "online now" : "last seen recently";
 
   useEffect(() => {
     localStorage.setItem("chatter-messages", JSON.stringify(messages));
@@ -174,7 +190,7 @@ export default function Home() {
           <div className="list-filter"><span>All chats</span><button aria-label="Filter conversations"><MoreHorizontal size={17} /></button></div>
           <div className="contact-list">
             {visibleContacts.map((contact) => <button key={contact.id} className={`contact-row ${selected.id === contact.id ? "selected" : ""}`} onClick={() => selectContact(contact.id)}>
-              <span className={`avatar avatar-md avatar-${contact.tone}`}>{contact.initials}</span>
+              <span className="contact-avatar-wrap"><span className={`avatar avatar-md avatar-${contact.tone}`}>{contact.initials}</span>{contact.online && <span className={`presence-dot ${contact.id === "maya" && presenceTick % 3 === 2 ? "away" : ""}`} aria-label={contact.id === "maya" && presenceTick % 3 === 2 ? "Recently active" : "Online now"} />}</span>
               <span className="contact-copy"><span className="contact-topline"><strong>{contact.name}</strong><time>{contact.time}</time></span><span className="contact-bottomline"><span>{contact.preview}</span>{contact.unread ? <b>{contact.unread}</b> : null}</span></span>
             </button>)}
             {!visibleContacts.length && <div className="empty-search"><Search size={20} /><p>No chats found</p><span>Try a different name or phrase.</span></div>}
@@ -185,7 +201,7 @@ export default function Home() {
         <section className={`chat-panel ${showMobileList ? "mobile-hidden" : ""}`} id="conversation">
           <header className="chat-header">
             <button className="mobile-back" onClick={() => setShowMobileList(true)} aria-label="Back to conversations"><ArrowLeft size={20} /></button>
-            <button className="chat-person" onClick={() => setShowDetails((value) => !value)}><span className={`avatar avatar-md avatar-${selected.tone}`}>{selected.initials}</span><span><strong>{selected.name}</strong><small><span className="online-pulse" /> {selected.status}</small></span></button>
+            <button className="chat-person" onClick={() => setShowDetails((value) => !value)}><span className="contact-avatar-wrap"><span className={`avatar avatar-md avatar-${selected.tone}`}>{selected.initials}</span>{selectedIsOnline && <span className="presence-dot" />}</span><span><strong>{selected.name}</strong><small><span className={`online-pulse ${selectedIsOnline ? "" : "offline"}`} /> {selectedStatus}</small></span></button>
             <div className="chat-actions"><button className="icon-button" aria-label="Start video call" onClick={() => toast("Video calls are coming next")}><Video size={19} /></button><button className="icon-button" aria-label="Start voice call" onClick={() => toast("Voice calls are coming next")}><Phone size={19} /></button><button className="icon-button" aria-label="Open chat details" onClick={() => setShowDetails((value) => !value)}><MoreHorizontal size={20} /></button></div>
           </header>
 
@@ -193,7 +209,7 @@ export default function Home() {
             <div className="day-divider"><span>Today</span></div>
             <div className="message-stream">
               {selectedMessages.map((message) => <div key={message.id} className={`message-row ${message.mine ? "mine" : "theirs"}`}><div className={`message-bubble ${message.attachment ? "has-attachment" : ""}`}>{message.attachment && <div className={`attachment-card attachment-${message.attachment.type}`}><span className="attachment-icon">{message.attachment.type === "image" ? <ImageIcon size={18} /> : <FileText size={18} />}</span><span><strong>{message.attachment.label}</strong><small>{message.attachment.type === "image" ? "Image" : "Tap to preview"}</small></span><button aria-label={`Open ${message.attachment.label}`} onClick={() => toast("Preview is ready for the sharing pass")}><ArrowLeft size={16} /></button></div>}<p>{message.text}</p><span className="message-meta">{message.time}{message.mine && <CheckCheck size={14} />}</span></div></div>)}
-              <div className="typing-row"><span className="typing-avatar avatar avatar-xs avatar-coral">MC</span><span className="typing-pill"><i /><i /><i /></span><span className="typing-label">Maya is typing</span></div>
+              {isTyping && <div className="typing-row"><span className="typing-avatar avatar avatar-xs avatar-coral">{selected.initials}</span><span className="typing-pill"><i /><i /><i /></span><span className="typing-label">{selected.name.split(" ")[0]} is typing</span></div>}
               <div ref={endRef} />
             </div>
             <div className="chat-note"><Link2 size={14} /> <span>Links, files, photos, and voice notes stay together in your chat memory.</span></div>
