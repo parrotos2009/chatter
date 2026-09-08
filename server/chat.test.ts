@@ -3,7 +3,9 @@ import type { TrpcContext } from "./_core/context";
 
 vi.mock("./db", () => ({
   getActivePresence: vi.fn(async () => []),
+  getCallSignals: vi.fn(async () => []),
   getRecentChatMessages: vi.fn(async () => []),
+  insertCallSignal: vi.fn(async () => undefined),
   insertChatMessage: vi.fn(),
   upsertPresence: vi.fn(async () => undefined),
 }));
@@ -27,5 +29,16 @@ describe("chat room", () => {
   it("accepts a presence heartbeat for a guest without touching the database", async () => {
     const caller = appRouter.createCaller(createContext());
     await expect(caller.chat.presence({ roomId: "lobby", clientId: "guest-1", displayName: "Guest", isTyping: true })).resolves.toEqual({ ok: true });
+  });
+
+  it("accepts a WebRTC offer signal", async () => {
+    const caller = appRouter.createCaller(createContext());
+    await expect(caller.rtc.sendSignal({ roomId: "lobby", fromClientId: "guest-1", toClientId: "guest-2", kind: "offer", payload: "{}" })).resolves.toEqual({ ok: true });
+  });
+
+  it("returns pending signals for a client", async () => {
+    const caller = appRouter.createCaller(createContext());
+    const result = await caller.rtc.signals({ roomId: "lobby", toClientId: "guest-2", after: new Date(0) });
+    expect(result).toEqual([]);
   });
 });

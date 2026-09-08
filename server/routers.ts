@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { getActivePresence, getRecentChatMessages, insertChatMessage, upsertPresence } from "./db";
+import { getActivePresence, getCallSignals, getRecentChatMessages, insertCallSignal, insertChatMessage, upsertPresence } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 
@@ -49,6 +49,13 @@ export const appRouter = router({
       const { url } = await storagePut(`${input.clientId}-shared/${nanoid(10)}-${safeName}`, buffer, input.mimeType || "application/octet-stream");
       return { url, fileName: input.fileName, mimeType: input.mimeType };
     }),
+  }),
+  rtc: router({
+    sendSignal: publicProcedure.input(z.object({ roomId: z.string().min(1).max(64).default("lobby"), fromClientId: z.string().min(1).max(64), toClientId: z.string().min(1).max(64), kind: z.enum(["offer", "answer", "candidate", "hangup"]), payload: z.string().max(20_000) })).mutation(async ({ input }) => {
+      await insertCallSignal(input);
+      return { ok: true } as const;
+    }),
+    signals: publicProcedure.input(z.object({ roomId: z.string().min(1).max(64).default("lobby"), toClientId: z.string().min(1).max(64), after: z.coerce.date() })).query(async ({ input }) => getCallSignals(input.roomId, input.toClientId, input.after)),
   }),
 });
 

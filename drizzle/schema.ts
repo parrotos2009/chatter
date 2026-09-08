@@ -50,3 +50,16 @@ export const chatPresence = mysqlTable("chatPresence", {
 
 export type ChatPresence = typeof chatPresence.$inferSelect;
 export type InsertChatPresence = typeof chatPresence.$inferInsert;
+
+export const callSignals = mysqlTable("callSignals", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: varchar("roomId", { length: 64 }).notNull().default("lobby"),
+  fromClientId: varchar("fromClientId", { length: 64 }).notNull(),
+  toClientId: varchar("toClientId", { length: 64 }).notNull(),
+  kind: varchar("kind", { length: 32 }).notNull(),
+  payload: text("payload").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CallSignal = typeof callSignals.$inferSelect;
+export type InsertCallSignal = typeof callSignals.$inferInsert;

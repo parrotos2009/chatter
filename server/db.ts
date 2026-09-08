@@ -1,6 +1,6 @@
 import { and, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { chatMessages, chatPresence, InsertChatMessage, InsertUser, users } from "../drizzle/schema";
+import { callSignals, chatMessages, chatPresence, InsertCallSignal, InsertChatMessage, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -117,4 +117,16 @@ export async function getActivePresence(roomId: string) {
   if (!db) return [];
   const cutoff = new Date(Date.now() - 25_000);
   return db.select().from(chatPresence).where(and(eq(chatPresence.roomId, roomId), gt(chatPresence.lastSeenAt, cutoff)));
+}
+
+export async function insertCallSignal(signal: InsertCallSignal) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(callSignals).values(signal);
+}
+
+export async function getCallSignals(roomId: string, toClientId: string, after: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(callSignals).where(and(eq(callSignals.roomId, roomId), eq(callSignals.toClientId, toClientId), gt(callSignals.createdAt, after))).orderBy(callSignals.createdAt).limit(40);
 }
