@@ -1,9 +1,14 @@
 import { z } from "zod";
-import { invokeLLM } from "./_core/llm";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { getActivePresence, getRecentChatMessages, insertChatMessage, upsertPresence } from "./db";
+import { storagePut } from "./storage";
+import { nanoid } from "nanoid";
+
+const roomInput = z.object({ roomId: z.string().min(1).max(64).default("lobby") });
+const identityInput = z.object({ clientId: z.string().min(1).max(64), displayName: z.string().min(1).max(120) });
 
 export const appRouter = router({
   system: systemRouter,
@@ -15,20 +20,35 @@ export const appRouter = router({
       return { success: true } as const;
     }),
   }),
-  ai: router({
-    ask: publicProcedure
-      .input(z.object({ prompt: z.string().min(1).max(500), context: z.string().max(8000).optional() }))
-      .mutation(async ({ input }) => {
-        const response = await invokeLLM({
-          messages: [
-            { role: "system", content: "You are Chatter Intelligence, a concise, warm assistant inside a private chat app. Use the conversation context when present. Keep responses under 100 words, use plain text, and never claim to have taken actions you did not take." },
-            { role: "user", content: `Conversation context:\n${input.context || "No prior context."}\n\nRequest: ${input.prompt}` },
-          ],
-        });
-        const content = response.choices?.[0]?.message?.content;
-        const text = typeof content === "string" ? content : "I couldn't find a clear answer yet. Try asking me in a different way.";
-        return { text };
-      }),
+  chat: router({
+    recent: publicProcedure.input(roomInput).query(async ({ input }) => {
+      const messages = await getRecentChatMessages(input.roomId);
+      return messages.reverse();
+    }),
+    send: publicProcedure.input(z.object({
+      roomId: z.string().min(1).max(64).default("lobby"),
+      clientId: z.string().min(1).max(64),
+      displayName: z.string().min(1).max(120),
+      text: z.string().max(4000).optional(),
+      attachmentUrl: z.string().max(1000).optional(),
+      attachmentName: z.string().max(255).optional(),
+      attachmentType: z.string().max(120).optional(),
+    })).mutation(async ({ input }) => {
+      if (!input.text?.trim() && !input.attachmentUrl) throw new Error("A message or attachment is required");
+      const message = await insertChatMessage({ ...input, text: input.text?.trim() || null });
+      return message;
+    }),
+    presence: publicProcedure.input(identityInput.merge(roomInput).extend({ isTyping: z.boolean().default(false) })).mutation(async ({ input }) => {
+      await upsertPresence(input);
+      return { ok: true } as const;
+    }),
+    activePresence: publicProcedure.input(roomInput).query(async ({ input }) => getActivePresence(input.roomId)),
+    upload: publicProcedure.input(z.object({ clientId: z.string().min(1).max(64), fileName: z.string().min(1).max(255), mimeType: z.string().max(120), base64: z.string().max(12_000_000) })).mutation(async ({ input }) => {
+      const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const buffer = Buffer.from(input.base64, "base64");
+      const { url } = await storagePut(`${input.clientId}-shared/${nanoid(10)}-${safeName}`, buffer, input.mimeType || "application/octet-stream");
+      return { url, fileName: input.fileName, mimeType: input.mimeType };
+    }),
   }),
 });
 

@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { chatMessages, chatPresence, InsertChatMessage, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,32 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getRecentChatMessages(roomId: string, limit = 80) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(chatMessages).where(eq(chatMessages.roomId, roomId)).orderBy(desc(chatMessages.createdAt)).limit(limit);
+}
+
+export async function insertChatMessage(message: InsertChatMessage) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.insert(chatMessages).values(message);
+  const id = Number(result[0].insertId);
+  const rows = await db.select().from(chatMessages).where(eq(chatMessages.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function upsertPresence(input: { clientId: string; displayName: string; roomId: string; isTyping: boolean }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(chatPresence).values({ ...input, isTyping: input.isTyping ? 1 : 0, lastSeenAt: new Date() }).onDuplicateKeyUpdate({
+    set: { displayName: input.displayName, roomId: input.roomId, isTyping: input.isTyping ? 1 : 0, lastSeenAt: new Date() },
+  });
+}
+
+export async function getActivePresence(roomId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const cutoff = new Date(Date.now() - 25_000);
+  return db.select().from(chatPresence).where(and(eq(chatPresence.roomId, roomId), gt(chatPresence.lastSeenAt, cutoff)));
+}

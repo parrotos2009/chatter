@@ -25,4 +25,28 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+export const chatMessages = mysqlTable("chatMessages", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: varchar("roomId", { length: 64 }).notNull().default("lobby"),
+  clientId: varchar("clientId", { length: 64 }).notNull(),
+  displayName: varchar("displayName", { length: 120 }).notNull(),
+  text: text("text"),
+  attachmentUrl: text("attachmentUrl"),
+  attachmentName: varchar("attachmentName", { length: 255 }),
+  attachmentType: varchar("attachmentType", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = typeof chatMessages.$inferInsert;
+
+export const chatPresence = mysqlTable("chatPresence", {
+  clientId: varchar("clientId", { length: 64 }).primaryKey(),
+  displayName: varchar("displayName", { length: 120 }).notNull(),
+  roomId: varchar("roomId", { length: 64 }).notNull().default("lobby"),
+  isTyping: int("isTyping").notNull().default(0),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+});
+
+export type ChatPresence = typeof chatPresence.$inferSelect;
+export type InsertChatPresence = typeof chatPresence.$inferInsert;
